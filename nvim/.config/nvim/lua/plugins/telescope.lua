@@ -22,6 +22,11 @@ return {
 			layout_strategy = "horizontal",
 			layout_config = { prompt_position = "top" },
 		},
+		pickers = {
+			find_files = {
+				hidden = true,
+			},
+		},
 	},
 	init = function()
 		vim.api.nvim_set_hl(0, "TelescopeBorder", { bg = "none" })
