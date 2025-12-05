@@ -10,6 +10,7 @@ vim.schedule(function()
 	vim.api.nvim_del_keymap("n", "gri")
 	vim.api.nvim_del_keymap("n", "grn")
 	vim.api.nvim_del_keymap("n", "grr")
+	vim.api.nvim_del_keymap("n", "grt")
 end)
 
 -- Use LspAttach autocommand to only map the following keys

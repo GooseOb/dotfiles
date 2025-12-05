@@ -9,7 +9,22 @@ return {
 			semanticTokens = "disable",
 		},
 	},
-	biome = {},
+	-- biome = {
+	-- 	filetypes = {
+	-- 		"astro",
+	-- 		"css",
+	-- 		"graphql",
+	-- 		"html",
+	-- 		"javascript",
+	-- 		"javascriptreact",
+	-- 		"json",
+	-- 		"jsonc",
+	-- 		"typescript",
+	-- 		"typescript.tsx",
+	-- 		"typescriptreact",
+	-- 		"vue"
+	-- 	},
+	-- },
 	ts_ls = {
 		on_attach = function(client)
 			client.server_capabilities.documentFormattingProvider = false
