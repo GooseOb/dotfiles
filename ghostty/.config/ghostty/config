@@ -1,0 +1,18 @@
+# Run `ghostty +show-config --default --docs` to view a list of
+# all available config options and their default values.
+#
+# Additionally, each config option is also explained in detail
+# on Ghostty's website, at https://ghostty.org/docs/config.
+
+background = #000000
+background-opacity = 0.8
+font-size = 16
+font-family = "JetBrains Mono Nerd Font"
+font-style-bold = false
+font-style-italic = false
+font-style-bold-italic = false
+shell-integration = zsh
+theme = "Kanagawa Wave"
+window-theme = ghostty
+font-feature = -calt
+confirm-close-surface = false

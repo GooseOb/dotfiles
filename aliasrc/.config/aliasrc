@@ -1,0 +1,34 @@
+# LS
+
+alias ls='ls --color=auto'
+alias la='ls -a'
+alias ll='ls -l'
+
+# Grep
+
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+
+# Git
+
+alias g='git'
+alias ga='git add'
+alias gc='git add . && git commit -m'
+alias gcp='git add . && commit-pkg -am'
+alias up='git push'
+alias gp='git pull'
+alias gcundo='git reset --soft HEAD~'
+alias grh='git reset --hard'
+
+# Others
+
+alias cd..='cd ..'
+alias v='nvim'
+alias e='emacs -nw'
+alias hyprc='nvim ~/.config/hypr/hyprland.conf'
+alias nano='nvim'
+alias o='xdg-open'
+
+# javar() { javac "$1" && java "${1%.*}"; }
+# javarclean() { rm *.class && javac "$1" && java "${1%.*}"; }
