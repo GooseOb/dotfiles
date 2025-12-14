@@ -9,22 +9,22 @@ return {
 			semanticTokens = "disable",
 		},
 	},
-	-- biome = {
-	-- 	filetypes = {
-	-- 		"astro",
-	-- 		"css",
-	-- 		"graphql",
-	-- 		"html",
-	-- 		"javascript",
-	-- 		"javascriptreact",
-	-- 		"json",
-	-- 		"jsonc",
-	-- 		"typescript",
-	-- 		"typescript.tsx",
-	-- 		"typescriptreact",
-	-- 		"vue"
-	-- 	},
-	-- },
+	biome = {
+		filetypes = {
+			"astro",
+			"css",
+			"graphql",
+			"html",
+			"javascript",
+			"javascriptreact",
+			"json",
+			"jsonc",
+			"typescript",
+			"typescript.tsx",
+			"typescriptreact",
+			"vue"
+		},
+	},
 	ts_ls = {
 		on_attach = function(client)
 			client.server_capabilities.documentFormattingProvider = false
@@ -93,6 +93,7 @@ return {
 				},
 				workspace = {
 					library = vim.api.nvim_get_runtime_file("", true),
+					checkThirdParty = false,
 				},
 			},
 		},
