@@ -1,0 +1,695 @@
+#+TITLE: My Emacs config
+#+STARTUP: showeverything
+#+OPTIONS: toc:2
+
+* [#B] Table of contents                                                :toc:
+- [[#general][General]]
+  - [[#package-manager][Package manager]]
+  - [[#path][PATH]]
+  - [[#evil-mode][Evil Mode]]
+  - [[#keybindings][Keybindings]]
+  - [[#commands][Commands]]
+- [[#theme][Theme]]
+- [[#fonts][Fonts]]
+- [[#gui-tweaks][GUI Tweaks]]
+  - [[#disable-menubar-toolbars-and-scrollbars][Disable Menubar, Toolbars and Scrollbars]]
+  - [[#display-line-numbers-and-truncated-lines][Display Line Numbers and Truncated Lines]]
+- [[#org-mode][ORG Mode]]
+  - [[#enabling-table-of-contents][Enabling Table of Contents]]
+  - [[#enabling-org-bullets][Enabling Org Bullets]]
+  - [[#disable-electric-indent][Disable Electric Indent]]
+  - [[#source-code-block-tag-expansion][Source Code Block Tag Expansion]]
+- [[#sudo-edit][SUDO Edit]]
+- [[#which-key][Which-Key]]
+- [[#ai][AI]]
+- [[#languages][Languages]]
+  - [[#tree-sitter][Tree-Sitter]]
+  - [[#code-completion][Code Completion]]
+  - [[#linting][Linting]]
+  - [[#formatting][Formatting]]
+  - [[#lsp][LSP]]
+- [[#save-history][Save History]]
+  - [[#undo-redo][Undo-Redo]]
+  - [[#recent-files][Recent Files]]
+  - [[#minibuffer][Minibuffer]]
+
+* General
+** Package manager
+
+#+begin_src emacs-lisp
+  (defvar elpaca-installer-version 0.11)
+  (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+  (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+  (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+  (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                                :ref nil :depth 1 :inherit ignore
+                                :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                                :build (:not elpaca--activate-package)))
+  (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+         (build (expand-file-name "elpaca/" elpaca-builds-directory))
+         (order (cdr elpaca-order))
+         (default-directory repo))
+    (add-to-list 'load-path (if (file-exists-p build) build repo))
+    (unless (file-exists-p repo)
+      (make-directory repo t)
+      (when (<= emacs-major-version 28) (require 'subr-x))
+      (condition-case-unless-debug err
+          (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                    ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                    ,@(when-let* ((depth (plist-get order :depth)))
+                                                        (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                    ,(plist-get order :repo) ,repo))))
+                    ((zerop (call-process "git" nil buffer t "checkout"
+                                          (or (plist-get order :ref) "--"))))
+                    (emacs (concat invocation-directory invocation-name))
+                    ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                          "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                    ((require 'elpaca))
+                    ((elpaca-generate-autoloads "elpaca" repo)))
+              (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+            (error "%s" (with-current-buffer buffer (buffer-string))))
+        ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+    (unless (require 'elpaca-autoloads nil t)
+      (require 'elpaca)
+      (elpaca-generate-autoloads "elpaca" repo)
+      (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
+  (add-hook 'after-init-hook #'elpaca-process-queues)
+  (elpaca `(,@elpaca-order))
+#+end_src
+
+** PATH
+#+begin_src emacs-lisp
+  (setq exec-path (append exec-path '("~/.local/share/nvim/mason/bin")))
+  (setq exec-path (append exec-path '("~/.nvm/versions/node/v24.12.0/bin")))
+  (setq exec-path (append exec-path '("~/bin")))
+#+end_src
+
+
+** Evil Mode
+
+#+begin_src emacs-lisp
+  :    (elpaca elpaca-use-package
+         (elpaca-use-package-mode))
+
+  ;;When installing a package used in the init file itself,
+  ;;e.g. a package which adds a use-package key word,
+  ;;use the :wait recipe keyword to block until that package is installed/configured.
+  ;;For example:
+  ;;(use-package general :ensure (:wait t) :demand t)
+
+  ;; Expands to: (elpaca evil (use-package evil :demand t))
+  (use-package evil
+    :ensure t
+    :init      ;; tweak evil's configuration before loading it
+    (setq evil-want-integration t) ;; This is optional since it's already set to t by default.
+    (setq evil-want-keybinding nil)
+    (setq evil-vsplit-window-right t)
+    (setq evil-split-window-below t)
+    (setq evil-undo-system 'undo-redo)
+    (evil-mode))
+  (use-package evil-collection
+    :ensure t
+    :after evil
+    :config
+    (setq evil-collection-mode-list '(dashboard dired ibuffer xref))
+    (evil-collection-init))
+  (use-package evil-tutor :ensure t)
+  (use-package evil-commentary
+    :ensure t
+    :config
+    (evil-commentary-mode))
+
+  ;;Turns off elpaca-use-package-mode current declaration
+  ;;Note this will cause evaluate the declaration immediately. It is not deferred.
+  ;;Useful for configuring built-in emacs features.
+  (use-package emacs :ensure nil :config (setq ring-bell-function #'ignore))
+#+end_src
+
+** Keybindings
+#+begin_src emacs-lisp
+  (use-package general
+    :ensure t
+    :config
+    (general-evil-setup)
+
+    ;; set up 'SPC' as the global leader key
+    (general-create-definer dt/leader-keys
+      :states '(normal insert visual emacs)
+      :keymaps 'override
+      :prefix "SPC" ;; set leader
+      :global-prefix "M-SPC") ;; access leader in insert mode
+
+    (dt/leader-keys
+      "." '(find-file :wk "Find file")
+      "f c" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Edit emacs config"))
+
+    (dt/leader-keys
+      "b" '(:ignore t :wk "buffer")
+      "b b" '(switch-to-buffer :wk "Switch buffer")
+      "b i" '(ibuffer :wk "Ibuffer")
+      "b k" '(kill-this-buffer :wk "Kill this buffer")
+      "b n" '(next-buffer :wk "Next buffer")
+      "b p" '(previous-buffer :wk "Previous buffer")
+      "b r" '(revert-buffer :wk "Reload buffer"))
+
+    (dt/leader-keys
+      "e" '(:ignore t :wk "Evaluate")    
+      "e b" '(eval-buffer :wk "Evaluate elisp in buffer")
+      "e d" '(eval-defun :wk "Evaluate defun containing or after point")
+      "e e" '(eval-expression :wk "Evaluate and elisp expression")
+      "e l" '(eval-last-sexp :wk "Evaluate elisp expression before point")
+      "e r" '(eval-region :wk "Evaluate elisp in region")) 
+
+    (dt/leader-keys
+      "h" '(:ignore t :wk "Help")
+      "h f" '(describe-function :wk "Describe function")
+      "h p" '(describe-function
+      	    (lambda ()
+      	      (interactive)
+      	      (describe-function (function-at-point)))
+      	    :wk "Describe function at point")
+      "h v" '(describe-variable :wk "Describe variable")
+      "h r r" '((lambda ()
+      		(interactive)
+      		(load-file user-init-file)
+      		(load-file user-init-file))
+                :wk "Reload emacs config"))
+
+    (dt/leader-keys
+      "t" '(:ignore t :wk "Toggle")
+      "t l" '(display-line-numbers-mode :wk "Toggle line numbers")
+      "t t" '(visual-line-mode :wk "Toggle truncated lines"))
+
+    (general-define-key
+     :states '(normal insert)
+     "C-s" 'save-buffer)
+
+    ;; LSP
+    (dt/leader-keys
+      "r" '(lsp-rename :wk "Rename symbol"))
+    (general-define-key
+     :states 'normal
+     "g d" '(lsp-find-definition :wk "Go to definition")
+     "g r" '(lsp-find-references :wk "Find references")
+     "g i" '(lsp-find-implementation :wk "Go to implementation")
+     "M-RET" '(lsp-execute-code-action :wk "Execute code action"))
+
+    (general-define-key
+     :keymaps 'org-mode-map
+     :states 'normal
+     "g d" 'org-open-at-point :wk "Open link at point"))
+
+  ;; Window navigation
+  (global-set-key (kbd "M-<left>")  'windmove-left)
+  (global-set-key (kbd "M-<right>") 'windmove-right)
+  (global-set-key (kbd "M-<up>")    'windmove-up)
+  (global-set-key (kbd "M-<down>")  'windmove-down)
+  ;; Text scaling
+  (global-set-key (kbd "C-=") 'text-scale-increase)
+  (global-set-key (kbd "C--") 'text-scale-decrease)
+  (global-set-key (kbd "<C-wheel-up>") 'text-scale-increase)
+  (global-set-key (kbd "<C-wheel-down>") 'text-scale-decrease)
+#+end_src
+
+** Commands
+#+begin_src emacs-lisp
+  (with-eval-after-load 'evil
+    (evil-ex-define-cmd "messages" (lambda ()
+  				   "Open horizonal split with *Messages* buffer."
+  				   (interactive)
+  				   (split-window-below)
+  				   (other-window 1)
+  				   (switch-to-buffer "*Messages*")))
+    )
+#+end_src
+
+* Theme
+#+begin_src emacs-lisp
+  (use-package kanagawa-themes
+    :ensure t
+    :config
+    ;; disable italics
+    (setq kanagawa-themes-comment-italic nil
+          kanagawa-themes-keyword-italic nil)
+    (load-theme 'kanagawa-wave t))
+#+end_src
+
+* Fonts
+Defining the various fonts that Emacs will use.
+
+#+begin_src emacs-lisp
+  (set-face-attribute 'default nil
+  		    :font "JetBrainsMono Nerd Font"
+  		    :height 110
+  		    :weight 'medium)
+  ;;(set-face-attribute 'variable-pitch nil
+  ;;:font "Ubuntu"
+  ;;:height 120
+  ;;:weight 'medium)
+  (set-face-attribute 'fixed-pitch nil
+  		    :font "JetBrainsMono Nerd Font"
+  		    :height 110
+  		    :weight 'medium)
+  ;; Makes commented text and keywords italics.
+  ;; This is working in emacsclient but not emacs.
+  ;; Your font must have an italic face available.
+  (set-face-attribute 'font-lock-comment-face nil
+  		    :slant 'italic)
+  (set-face-attribute 'font-lock-keyword-face nil
+  		    :slant 'italic)
+
+  ;; This sets the default font on all graphical frames created after restarting Emacs.
+  ;; Does the same thing as 'set-face-attribute default' above, but emacsclient fonts
+  ;; are not right unless I also add this method of setting the default font.
+  (add-to-list 'default-frame-alist '(font . "JetBrainsMono Nerd Font"))
+
+  ;; Uncomment the following line if line spacing needs adjusting.
+  (setq-default line-spacing 0.12)
+#+end_src
+
+* GUI Tweaks
+Let's make GNU Emacs look a little better.
+
+** Disable Menubar, Toolbars and Scrollbars
+#+begin_src emacs-lisp
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+#+end_src
+
+** Display Line Numbers and Truncated Lines
+#+begin_src emacs-lisp
+  (global-display-line-numbers-mode 1)
+  (global-visual-line-mode t)
+  (setq display-line-numbers 'relative)
+#+end_src
+
+* ORG Mode
+** Enabling Table of Contents
+#+begin_src emacs-lisp
+  (use-package toc-org
+    :ensure t
+    :commands toc-org-enable
+    :init (add-hook 'org-mode-hook 'toc-org-enable))
+#+end_src
+
+** Enabling Org Bullets
+Org-bullets gives us attractive bullets rather than asterisks.
+
+#+begin_src emacs-lisp
+  (add-hook 'org-mode-hook 'org-indent-mode)
+  (use-package org-bullets :ensure t)
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+#+end_src
+
+** Disable Electric Indent
+#+begin-src emacs-lisp
+(electric-indent-mode -1)
+#+end_src
+
+** Source Code Block Tag Expansion
+Org-tempo is not a separate package but a module within org that can be enabled.  Org-tempo allows for '<s' followed by TAB to expand to a begin_src tag.  Other expansions available include:
+
+| Typing the below + TAB | Expands to ...                          |
+|------------------------+-----------------------------------------|
+| <a                     | '#+BEGIN_EXPORT ascii' … '#+END_EXPORT  |
+| <c                     | '#+BEGIN_CENTER' … '#+END_CENTER'       |
+| <C                     | '#+BEGIN_COMMENT' … '#+END_COMMENT'     |
+| <e                     | '#+BEGIN_EXAMPLE' … '#+END_EXAMPLE'     |
+| <E                     | '#+BEGIN_EXPORT' … '#+END_EXPORT'       |
+| <h                     | '#+BEGIN_EXPORT html' … '#+END_EXPORT'  |
+| <l                     | '#+BEGIN_EXPORT latex' … '#+END_EXPORT' |
+| <q                     | '#+BEGIN_QUOTE' … '#+END_QUOTE'         |
+| <s                     | '#+BEGIN_SRC' … '#+END_SRC'             |
+| <v                     | '#+BEGIN_VERSE' … '#+END_VERSE'         |
+
+
+#+begin_src emacs-lisp 
+  (require 'org-tempo)
+#+end_src
+
+* SUDO Edit
+#+begin_src emacs-lisp
+  (use-package sudo-edit
+    :ensure t
+    :config
+    (dt/leader-keys
+      "fu" '(sudo-edit-find-file :wk "Sudo find file")
+      "fU" '(sudo-edit :wk "Sudo edit file")))
+#+end_src
+
+* Which-Key
+#+begin_src emacs-lisp
+  (use-package which-key
+    :ensure t
+    :init
+    (which-key-mode 1)
+    :config
+    (setq which-key-side-window-location 'bottom
+  	which-key-sort-order #'which-key-key-order-alpha
+  	which-key-sort-uppercase-first nil
+  	which-key-add-column-padding 1
+  	which-key-max-display-columns nil
+  	which-key-min-display-lines 6
+  	which-key-side-window-slot -10
+  	which-key-side-window-max-height 0.25
+  	which-key-idle-delay 0.8
+  	which-key-max-description-length 25
+  	which-key-allow-imprecise-window-fit t
+  	which-key-separator " → " ))
+#+end_src
+
+* AI
+#+begin_src emacs-lisp
+  (use-package transient :ensure t)
+  (setq package-install-upgrade-built-in t)
+  (use-package gptel :ensure t
+    :bind
+    (("C-c g g" . gptel)       ;; Quickly open gptel buffer
+     ("C-c g q" . gptel-send)  ;; Send input while in gptel buffer
+     ("C-c g h" . gptel-help)) ;; Open gptel documentation
+    :config
+    (setq gptel-default-session "GPTel-session")
+    (gptel-make-gh-copilot "Copilot")
+    (setq gptel-backend (gptel-make-gh-copilot "Copilot"))
+    )
+
+  (use-package track-changes :ensure t)
+  (use-package copilot
+    :ensure t
+    :hook (prog-mode . copilot-mode)
+    :bind (:map copilot-completion-map
+                ("M-l" . copilot-accept-completion-by-word) ;; Accept completion with Alt+l
+                ("M-f" . copilot-accept-completion)        ;; Accept full completion
+                ("C-g" . copilot-dismiss-completion)       ;; Dismiss completion
+                ("M-n" . copilot-next-completion)          ;; Next completion
+                ("M-p" . copilot-previous-completion))      ;; Previous completion
+    :config
+    (add-hook 'evil-insert-state-entry-hook 'copilot-mode)
+    (add-to-list 'copilot-indentation-alist '(prog-mode 2))
+    (add-to-list 'copilot-indentation-alist '(org-mode 2))
+    (add-to-list 'copilot-indentation-alist '(text-mode 2))
+    (add-to-list 'copilot-indentation-alist '(closure-mode 2))
+    (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2))
+    ) ;; Enable copilot in evil insert mode
+#+end_src
+
+* Languages
+
+** Tree-Sitter
+
+#+begin_src emacs-lisp
+  (use-package treesit
+    :mode (("\\.tsx\\'" . tsx-ts-mode)
+           ("\\.js\\'"  . typescript-ts-mode)
+           ("\\.mjs\\'" . typescript-ts-mode)
+           ("\\.mts\\'" . typescript-ts-mode)
+           ("\\.cjs\\'" . typescript-ts-mode)
+           ("\\.ts\\'"  . typescript-ts-mode)
+           ("\\.jsx\\'" . tsx-ts-mode)
+           ("\\.json\\'" .  json-ts-mode)
+           ("\\.Dockerfile\\'" . dockerfile-ts-mode)
+           ("\\.prisma\\'" . prisma-ts-mode)
+           ;; More modes defined here...
+           )
+    :preface
+    (defun os/setup-install-grammars ()
+      "Install Tree-sitter grammars if they are absent."
+      (interactive)
+      (dolist (grammar
+               '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
+                 (bash "https://github.com/tree-sitter/tree-sitter-bash")
+                 (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
+                 (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.21.2" "src"))
+                 (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
+                 (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
+                 (go "https://github.com/tree-sitter/tree-sitter-go" "v0.20.0")
+                 (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+                 (make "https://github.com/alemuller/tree-sitter-make")
+                 (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+                 (cmake "https://github.com/uyha/tree-sitter-cmake")
+                 (c "https://github.com/tree-sitter/tree-sitter-c")
+                 (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+                 (toml "https://github.com/tree-sitter/tree-sitter-toml")
+                 (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
+                 (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
+                 (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
+                 (prisma "https://github.com/victorhqc/tree-sitter-prisma")))
+        (add-to-list 'treesit-language-source-alist grammar)
+        ;; Only install `grammar' if we don't already have it
+        ;; installed. However, if you want to *update* a grammar then
+        ;; this obviously prevents that from happening.
+        (unless (treesit-language-available-p (car grammar))
+          (treesit-install-language-grammar (car grammar)))))
+
+    ;; Optional, but recommended. Tree-sitter enabled major modes are
+    ;; distinct from their ordinary counterparts.
+    ;;
+    ;; You can remap major modes with `major-mode-remap-alist'. Note
+    ;; that this does *not* extend to hooks! Make sure you migrate them
+    ;; also
+    (dolist (mapping
+             '((python-mode . python-ts-mode)
+               (css-mode . css-ts-mode)
+               (typescript-mode . typescript-ts-mode)
+               (js-mode . typescript-ts-mode)
+               (js2-mode . typescript-ts-mode)
+               (c-mode . c-ts-mode)
+               (c++-mode . c++-ts-mode)
+               (c-or-c++-mode . c-or-c++-ts-mode)
+               (bash-mode . bash-ts-mode)
+               (css-mode . css-ts-mode)
+               (json-mode . json-ts-mode)
+               (js-json-mode . json-ts-mode)
+               (sh-mode . bash-ts-mode)
+               (sh-base-mode . bash-ts-mode)))
+      (add-to-list 'major-mode-remap-alist mapping))
+    :config
+    (os/setup-install-grammars))
+#+end_src
+
+** Code Completion
+
+#+begin_src emacs-lisp
+  (use-package corfu
+    :ensure t
+    ;; Optional customizations
+    :custom
+    (corfu-cycle t)                 ; Allows cycling through candidates
+    (corfu-auto t)                  ; Enable auto completion
+    (corfu-auto-prefix 2)           ; Minimum length of prefix for completion
+    (corfu-auto-delay 0)            ; No delay for completion
+    (corfu-popupinfo-delay '(0.5 . 0.2))  ; Automatically update info popup after that numver of seconds
+    (corfu-preview-current 'insert) ; insert previewed candidate
+    (corfu-preselect 'prompt)
+    (corfu-on-exact-match nil)      ; Don't auto expand tempel snippets
+    ;; Optionally use TAB for cycling, default is `corfu-complete'.
+    :bind (:map corfu-map
+                ("M-SPC"      . corfu-insert-separator)
+                ("TAB"        . corfu-next)
+                ([tab]        . corfu-next)
+                ("S-TAB"      . corfu-previous)
+                ([backtab]    . corfu-previous)
+                ("S-<return>" . corfu-insert)
+                ("RET"        . corfu-insert))
+
+    :init
+    (global-corfu-mode)
+    (corfu-history-mode)
+    (corfu-popupinfo-mode) ; Popup completion info
+    :config
+    (add-hook 'eshell-mode-hook
+              (lambda () (setq-local corfu-quit-at-boundary t
+                                     corfu-quit-no-match t
+                                     corfu-auto nil)
+                (corfu-mode))
+              nil
+              t))
+#+end_src
+
+** Linting
+
+#+begin_src emacs-lisp
+  (use-package flycheck
+    :ensure t
+    :init (global-flycheck-mode)
+    :bind (:map flycheck-mode-map
+                ("M-n" . flycheck-next-error) ; optional but recommended error navigation
+                ("M-p" . flycheck-previous-error)))
+
+  (use-package lsp-eslint
+    :demand t
+    :after lsp-mode)
+#+end_src
+
+** Formatting
+
+#+begin_src emacs-lisp
+    (defun my/find-biome-config (dir)
+      "Return non-nil if biome.json exists in DIR or any parent."
+      (let ((root (locate-dominating-file dir "biome.json")))
+        (and root (expand-file-name "biome.json" root))))
+
+    (defun my/web-formatter ()
+      "Format web files using Biome if biome.json is found, otherwise Prettier."
+      (if (my/find-biome-config (file-name-directory (buffer-file-name)))
+          '("biome" "format" "--stdin-file-path")
+        '("prettier" "--stdin-filepath")))
+
+    (use-package apheleia
+      :ensure t
+      :config
+      (apheleia-global-mode +1)
+      (setf (alist-get 'my/web-formatter apheleia-formatters)
+            '((my/web-formatter) filepath))
+      (dolist (mode '(js-mode
+                      js-ts-mode
+                      typescript-mode
+                      typescript-ts-mode
+                      tsx-ts-mode
+                      json-mode
+                      json-ts-mode
+                      css-mode
+                      css-ts-mode
+                      html-mode
+                      html-ts-mode))
+        (setf (alist-get mode apheleia-mode-alist)
+              #'my/web-formatter)))
+#+end_src
+
+** LSP
+
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :diminish "LSP"
+    :ensure t
+    :hook ((lsp-mode . lsp-diagnostics-mode)
+           (lsp-mode . lsp-enable-which-key-integration)
+           ((tsx-ts-mode
+             typescript-ts-mode
+             js-ts-mode) . lsp-deferred))
+    :custom
+    (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
+    (lsp-completion-provider :none)       ; Using Corfu as the provider
+    (lsp-diagnostics-provider :flycheck)
+    (lsp-session-file (locate-user-emacs-file ".lsp-session"))
+    (lsp-log-io nil)                      ; IMPORTANT! Use only for debugging! Drastically affects performance
+    (lsp-keep-workspace-alive nil)        ; Close LSP server if all project buffers are closed
+    (lsp-idle-delay 0.5)                  ; Debounce timer for `after-change-function'
+    ;; core
+    (lsp-enable-xref t)                   ; Use xref to find references
+    (lsp-auto-configure t)                ; Used to decide between current active servers
+    (lsp-eldoc-enable-hover t)            ; Display signature information in the echo area
+    (lsp-enable-dap-auto-configure t)     ; Debug support
+    (lsp-enable-file-watchers nil)
+    (lsp-enable-folding nil)              ; I disable folding since I use origami
+    (lsp-enable-imenu t)
+    (lsp-enable-indentation nil)          ; I use prettier
+    (lsp-enable-links nil)                ; No need since we have `browse-url'
+    (lsp-enable-on-type-formatting nil)   ; Prettier handles this
+    (lsp-enable-suggest-server-download t) ; Useful prompt to download LSP providers
+    (lsp-enable-symbol-highlighting t)     ; Shows usages of symbol at point in the current buffer
+    (lsp-enable-text-document-color nil)   ; This is Treesitter's job
+
+    (lsp-ui-sideline-show-hover nil)      ; Sideline used only for diagnostics
+    (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
+    ;; completion
+    (lsp-completion-enable t)
+    (lsp-completion-enable-additional-text-edit t) ; Ex: auto-insert an import for a completion candidate
+    (lsp-enable-snippet t)                         ; Important to provide full JSX completion
+    (lsp-completion-show-kind t)                   ; Optional
+    ;; headerline
+    (lsp-headerline-breadcrumb-enable t)  ; Optional, I like the breadcrumbs
+    (lsp-headerline-breadcrumb-enable-diagnostics nil) ; Don't make them red, too noisy
+    (lsp-headerline-breadcrumb-enable-symbol-numbers nil)
+    (lsp-headerline-breadcrumb-icons-enable nil)
+    ;; modeline
+    (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
+    (lsp-modeline-diagnostics-enable nil)  ; Already supported through `flycheck'
+    (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
+    (lsp-signature-doc-lines 1)                ; Don't raise the echo area. It's distracting
+    (lsp-ui-doc-use-childframe t)              ; Show docs for symbol at point
+    (lsp-eldoc-render-all nil)            ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
+    ;; lens
+    (lsp-lens-enable nil)                 ; Optional, I don't need it
+    ;; semantic
+    (lsp-semantic-tokens-enable nil)      ; Related to highlighting, and we defer to treesitter
+
+    :preface
+    (defun lsp-booster--advice-json-parse (old-fn &rest args)
+      "Try to parse bytecode instead of json."
+      (or
+       (when (equal (following-char) ?#)
+
+         (let ((bytecode (read (current-buffer))))
+           (when (byte-code-function-p bytecode)
+             (funcall bytecode))))
+       (apply old-fn args)))
+    (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+      "Prepend emacs-lsp-booster command to lsp CMD."
+      (let ((orig-result (funcall old-fn cmd test?)))
+        (if (and (not test?)                             ;; for check lsp-server-present?
+                 (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+                 lsp-use-plists
+                 (not (functionp 'json-rpc-connection))  ;; native json-rpc
+                 (executable-find "emacs-lsp-booster"))
+            (progn
+              (message "Using emacs-lsp-booster for %s!" orig-result)
+              (cons "emacs-lsp-booster" orig-result))
+          orig-result)))
+    :init
+    (setq lsp-use-plists t)
+    ;; Initiate https://github.com/blahgeek/emacs-lsp-booster for performance
+    (advice-add (if (progn (require 'json)
+                           (fboundp 'json-parse-buffer))
+                    'json-parse-buffer
+                  'json-read)
+                :around
+                #'lsp-booster--advice-json-parse)
+    (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+    )
+
+  (use-package lsp-completion
+    :no-require
+    :hook ((lsp-mode . lsp-completion-mode)))
+
+  (use-package lsp-ui
+    :ensure t
+    :commands
+    (lsp-ui-doc-show
+     lsp-ui-doc-glance)
+    :bind (:map lsp-mode-map
+                ("C-c C-d" . 'lsp-ui-doc-glance))
+    :after (lsp-mode evil)
+    :config (setq lsp-ui-doc-enable t
+                  evil-lookup-func #'lsp-ui-doc-glance ; Makes K in evil-mode toggle the doc for symbol at point
+                  lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
+                  lsp-ui-doc-include-signature t       ; Show signature
+                  lsp-ui-doc-position 'at-point))
+#+end_src
+
+* Save History
+** Undo-Redo
+#+begin_src emacs-lisp
+  (use-package undohist 
+    :ensure t
+    :init
+    (undohist-initialize))
+#+end_src
+
+** Recent Files
+#+begin_src emacs-lisp
+  (recentf-mode 1)
+  (setq recentf-max-saved-items 200)
+  (setq recentf-auto-cleanup 'never)
+#+end_src
+
+** Minibuffer
+#+begin_src emacs-lisp
+  (savehist-mode 1)
+  (setq history-length 200)
+  (setq savehist-additional-variables
+        '(kill-ring
+          search-ring
+          regexp-search-ring))
+#+end_src

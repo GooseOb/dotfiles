@@ -1,0 +1,14 @@
+# Ignore everything by default
+*
+
+# Keep core Emacs config files
+!init.el
+!early-init.el
+!config.org
+
+# Keep snippets (user-authored)
+!snippets/
+!snippets/**
+
+# Keep this file itself
+!.gitignore
