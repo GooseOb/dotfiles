@@ -1,17 +1,19 @@
-#+TITLE: My Emacs config
+#+TITLE: Emacs config
+#+AUTHOR: GooseOb
 #+STARTUP: showeverything
 #+OPTIONS: toc:2
 
-* [#B] Table of contents                                                :toc:
+* Table of contents                                                :toc:
 - [[#general][General]]
-  - [[#package-manager][Package manager]]
   - [[#path][PATH]]
+  - [[#package-manager][Package manager]]
   - [[#evil-mode][Evil Mode]]
   - [[#keybindings][Keybindings]]
   - [[#commands][Commands]]
-- [[#theme][Theme]]
-- [[#fonts][Fonts]]
-- [[#gui-tweaks][GUI Tweaks]]
+  - [[#projects][Projects]]
+- [[#gui][GUI]]
+  - [[#theme][Theme]]
+  - [[#fonts][Fonts]]
   - [[#disable-menubar-toolbars-and-scrollbars][Disable Menubar, Toolbars and Scrollbars]]
   - [[#display-line-numbers-and-truncated-lines][Display Line Numbers and Truncated Lines]]
 - [[#org-mode][ORG Mode]]
@@ -34,6 +36,13 @@
   - [[#minibuffer][Minibuffer]]
 
 * General
+** PATH
+#+begin_src emacs-lisp
+  (setq exec-path (append exec-path '("~/.local/share/nvim/mason/bin")))
+  (setq exec-path (append exec-path '("~/.nvm/versions/node/v24.12.0/bin")))
+  (setq exec-path (append exec-path '("~/bin")))
+#+end_src
+
 ** Package manager
 
 #+begin_src emacs-lisp
@@ -76,14 +85,6 @@
   (add-hook 'after-init-hook #'elpaca-process-queues)
   (elpaca `(,@elpaca-order))
 #+end_src
-
-** PATH
-#+begin_src emacs-lisp
-  (setq exec-path (append exec-path '("~/.local/share/nvim/mason/bin")))
-  (setq exec-path (append exec-path '("~/.nvm/versions/node/v24.12.0/bin")))
-  (setq exec-path (append exec-path '("~/bin")))
-#+end_src
-
 
 ** Evil Mode
 
@@ -220,10 +221,33 @@
   				   (split-window-below)
   				   (other-window 1)
   				   (switch-to-buffer "*Messages*")))
+    (evil-ex-define-cmd "warnings" (lambda ()
+  				   "Open horizonal split with *Warnings* buffer."
+  				   (interactive)
+  				   (split-window-below)
+  				   (other-window 1)
+  				   (switch-to-buffer "*Warnings*")))
     )
 #+end_src
 
-* Theme
+** Projects
+#+begin_src emacs-lisp
+  (use-package projectile
+    :ensure t
+    :diminish projectile-mode
+    :config
+    (projectile-mode +1)
+    (setq projectile-completion-system 'auto)
+    (dt/leader-keys
+      "p" '(:ignore t :wk "projectile")
+      "p p" '(projectile-switch-project :wk "Switch project")
+      "p f" '(projectile-find-file :wk "Find file in project")
+      "p s" '(projectile-ripgrep :wk "Search in project"))
+    )
+#+end_src
+
+* GUI
+** Theme
 #+begin_src emacs-lisp
   (use-package kanagawa-themes
     :ensure t
@@ -234,7 +258,7 @@
     (load-theme 'kanagawa-wave t))
 #+end_src
 
-* Fonts
+** Fonts
 Defining the various fonts that Emacs will use.
 
 #+begin_src emacs-lisp
@@ -266,9 +290,6 @@ Defining the various fonts that Emacs will use.
   ;; Uncomment the following line if line spacing needs adjusting.
   (setq-default line-spacing 0.12)
 #+end_src
-
-* GUI Tweaks
-Let's make GNU Emacs look a little better.
 
 ** Disable Menubar, Toolbars and Scrollbars
 #+begin_src emacs-lisp
@@ -361,8 +382,6 @@ Org-tempo is not a separate package but a module within org that can be enabled.
 
 * AI
 #+begin_src emacs-lisp
-  (use-package transient :ensure t)
-  (setq package-install-upgrade-built-in t)
   (use-package gptel :ensure t
     :bind
     (("C-c g g" . gptel)       ;; Quickly open gptel buffer
@@ -374,7 +393,6 @@ Org-tempo is not a separate package but a module within org that can be enabled.
     (setq gptel-backend (gptel-make-gh-copilot "Copilot"))
     )
 
-  (use-package track-changes :ensure t)
   (use-package copilot
     :ensure t
     :hook (prog-mode . copilot-mode)
@@ -410,6 +428,18 @@ Org-tempo is not a separate package but a module within org that can be enabled.
            ("\\.json\\'" .  json-ts-mode)
            ("\\.Dockerfile\\'" . dockerfile-ts-mode)
            ("\\.prisma\\'" . prisma-ts-mode)
+           ("\\.svelte\\'" . svelte-ts-mode)
+           ("\\.html\\'" . html-ts-mode)
+           ("\\.css\\'"  . css-ts-mode)
+           ("\\.py\\'"  . python-ts-mode)
+           ("\\.sh\\'"  . bash-ts-mode)
+           ("\\.bash\\'"  . bash-ts-mode)
+           ("\\.zsh\\'"  . bash-ts-mode)
+           ("\\.c\\'"   . c-ts-mode)
+           ("\\.h\\'"   . c-ts-mode)
+           ("\\.cpp\\'" . c++-ts-mode)
+           ("\\.hpp\\'" . c++-ts-mode)
+           ("CMakeLists\\.txt\\'" . cmake-ts-mode)
            ;; More modes defined here...
            )
     :preface
@@ -434,7 +464,8 @@ Org-tempo is not a separate package but a module within org that can be enabled.
                  (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
                  (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
                  (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
-                 (prisma "https://github.com/victorhqc/tree-sitter-prisma")))
+                 (prisma . ("https://github.com/victorhqc/tree-sitter-prisma"))
+                 (svelte . ("https://github.com/Himujjal/tree-sitter-svelte"))))
         (add-to-list 'treesit-language-source-alist grammar)
         ;; Only install `grammar' if we don't already have it
         ;; installed. However, if you want to *update* a grammar then
@@ -462,7 +493,12 @@ Org-tempo is not a separate package but a module within org that can be enabled.
                (json-mode . json-ts-mode)
                (js-json-mode . json-ts-mode)
                (sh-mode . bash-ts-mode)
-               (sh-base-mode . bash-ts-mode)))
+               (sh-base-mode . bash-ts-mode)
+               (html-mode . html-ts-mode)
+               (cmake-mode . cmake-ts-mode)
+               (markdown-mode . markdown-ts-mode)
+               (svelte-mode . svelte-ts-mode)
+  	     ))
       (add-to-list 'major-mode-remap-alist mapping))
     :config
     (os/setup-install-grammars))
@@ -525,36 +561,40 @@ Org-tempo is not a separate package but a module within org that can be enabled.
 ** Formatting
 
 #+begin_src emacs-lisp
-    (defun my/find-biome-config (dir)
-      "Return non-nil if biome.json exists in DIR or any parent."
-      (let ((root (locate-dominating-file dir "biome.json")))
-        (and root (expand-file-name "biome.json" root))))
+  (defun my/find-biome-config (dir)
+    "Return non-nil if biome.json exists in DIR or any parent."
+    (let ((root (locate-dominating-file dir "biome.json")))
+      (and root (expand-file-name "biome.json" root))))
 
-    (defun my/web-formatter ()
-      "Format web files using Biome if biome.json is found, otherwise Prettier."
-      (if (my/find-biome-config (file-name-directory (buffer-file-name)))
-          '("biome" "format" "--stdin-file-path")
-        '("prettier" "--stdin-filepath")))
+  (defun my/web-formatter ()
+    "Return Biome formatting command if Biome config is found, otherwise Prettier."
+    (if (my/find-biome-config (file-name-directory (buffer-file-name)))
+        '("biome" "format" "--stdin-file-path")
+      '("prettier" "--stdin-filepath")))
 
-    (use-package apheleia
-      :ensure t
-      :config
-      (apheleia-global-mode +1)
-      (setf (alist-get 'my/web-formatter apheleia-formatters)
-            '((my/web-formatter) filepath))
-      (dolist (mode '(js-mode
-                      js-ts-mode
-                      typescript-mode
-                      typescript-ts-mode
-                      tsx-ts-mode
-                      json-mode
-                      json-ts-mode
-                      css-mode
-                      css-ts-mode
-                      html-mode
-                      html-ts-mode))
-        (setf (alist-get mode apheleia-mode-alist)
-              #'my/web-formatter)))
+  (use-package apheleia
+    :ensure t
+    :config
+    (apheleia-global-mode +1)
+    (setf (alist-get 'my/web-formatter apheleia-formatters)
+          '((my/web-formatter) filepath))
+    (dolist (mode '(js-mode
+                    js-ts-mode
+                    typescript-mode
+                    typescript-ts-mode
+                    tsx-ts-mode
+                    json-mode
+                    json-ts-mode
+                    css-mode
+                    css-ts-mode
+                    html-mode
+                    html-ts-mode))
+      (setf (alist-get mode apheleia-mode-alist)
+            #'my/web-formatter))
+    (dolist (mode '(svelte-mode svelte-ts-mode))
+      (setf (alist-get mode apheleia-mode-alist)
+            'prettier))
+    )
 #+end_src
 
 ** LSP
@@ -565,7 +605,8 @@ Org-tempo is not a separate package but a module within org that can be enabled.
     :ensure t
     :hook ((lsp-mode . lsp-diagnostics-mode)
            (lsp-mode . lsp-enable-which-key-integration)
-           ((tsx-ts-mode
+           ((svelte-ts-mode
+  	   tsx-ts-mode
              typescript-ts-mode
              js-ts-mode) . lsp-deferred))
     :custom
@@ -666,6 +707,14 @@ Org-tempo is not a separate package but a module within org that can be enabled.
                   lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
                   lsp-ui-doc-include-signature t       ; Show signature
                   lsp-ui-doc-position 'at-point))
+#+end_src
+
+*** Svelte
+
+#+begin_src emacs-lisp
+  (use-package svelte-ts-mode
+    :ensure (:host github :repo "leafOfTree/svelte-ts-mode")
+    )
 #+end_src
 
 * Save History
