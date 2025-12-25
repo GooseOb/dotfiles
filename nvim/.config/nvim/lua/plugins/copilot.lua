@@ -30,7 +30,7 @@ return {
 		command = "CopilotChat",
 		build = "make tiktoken",
 		keys = {
-			{ "<leader>cc", "<Cmd>CopilotChat<CR>", desc = "Open Copilot Chat" },
+			{ "<leader>cc", "<Cmd>CopilotChatToggle<CR>", desc = "Toggle Copilot Chat" },
 			{ "<leader>cm", "<Cmd>CopilotChatModels<CR>", desc = "Select Copilot Chat Model" },
 			{ "<leader>co", "<Cmd>CopilotChatOptimize<CR>", mode = "v", desc = "Optimize using Copilot Chat" },
 			{ "<leader>ce", "<Cmd>CopilotChatExplain<CR>", mode = "v", desc = "Explain code using Copilot Chat" },
