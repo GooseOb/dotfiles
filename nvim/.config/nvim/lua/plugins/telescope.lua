@@ -19,6 +19,13 @@ return {
 		"nvim-lua/plenary.nvim",
 		"BurntSushi/ripgrep",
 		"nvim-telescope/telescope-ui-select.nvim",
+		{
+			"nvim-telescope/telescope-fzf-native.nvim",
+			build = "make",
+			cond = function()
+				return vim.fn.executable("make") == 1
+			end,
+		},
 	},
 	opts = {
 		defaults = {
@@ -35,5 +42,6 @@ return {
 	init = function()
 		vim.api.nvim_set_hl(0, "TelescopeBorder", { bg = "none" })
 		require("telescope").load_extension("ui-select")
+		require("telescope").load_extension("fzf")
 	end,
 }
