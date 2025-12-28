@@ -6,7 +6,6 @@ return {
 			{ "<leader>e", desc = "File Manager" },
 			{ "<leader>h", desc = "No highlight" },
 			{ "<leader>o", desc = "Git Status" },
-			{ "<leader>w", desc = "Save" },
 			{ "<leader>q", desc = "Close Current Buffer" },
 			{ "<leader>b", desc = "Pick Buffer" },
 			{ "<leader>x", desc = "Pick Buffer to Close" },
