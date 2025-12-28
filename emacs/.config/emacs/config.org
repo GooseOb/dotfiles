@@ -249,13 +249,15 @@
 * GUI
 ** Theme
 #+begin_src emacs-lisp
-  (use-package kanagawa-themes
+  (with-eval-after-load 'gruber-darker-theme
+    (custom-theme-set-faces
+     'gruber-darker
+     `(org-block ((t :foreground ,(face-attribute 'default :background))))))
+
+  (use-package gruber-darker-theme
     :ensure t
     :config
-    ;; disable italics
-    (setq kanagawa-themes-comment-italic nil
-          kanagawa-themes-keyword-italic nil)
-    (load-theme 'kanagawa-wave t))
+    (load-theme 'gruber-darker t))
 #+end_src
 
 ** Fonts
@@ -600,15 +602,29 @@ Org-tempo is not a separate package but a module within org that can be enabled.
 ** LSP
 
 #+begin_src emacs-lisp
+  (use-package web-mode
+    :ensure t
+    :mode (("\\.html\\'" . web-mode)
+           ("\\.css\\'"  . web-mode)
+           ("\\.js\\'"   . web-mode)
+           ("\\.mjs\\'"  . web-mode)
+           ("\\.mts\\'"  . web-mode)
+           ("\\.ts\\'"   . web-mode)
+           ("\\.jsx\\'"  . web-mode)
+           ("\\.tsx\\'"  . web-mode)
+  	 ("\\.svelte\\'" . web-mode))
+  	   )
   (use-package lsp-mode
     :diminish "LSP"
     :ensure t
     :hook ((lsp-mode . lsp-diagnostics-mode)
            (lsp-mode . lsp-enable-which-key-integration)
            ((svelte-ts-mode
-  	   tsx-ts-mode
+    	   tsx-ts-mode
              typescript-ts-mode
-             js-ts-mode) . lsp-deferred))
+             js-ts-mode
+  	   web-mode
+  	     ) . lsp-deferred))
     :custom
     (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
     (lsp-completion-provider :none)       ; Using Corfu as the provider
@@ -707,14 +723,6 @@ Org-tempo is not a separate package but a module within org that can be enabled.
                   lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
                   lsp-ui-doc-include-signature t       ; Show signature
                   lsp-ui-doc-position 'at-point))
-#+end_src
-
-*** Svelte
-
-#+begin_src emacs-lisp
-  (use-package svelte-ts-mode
-    :ensure (:host github :repo "leafOfTree/svelte-ts-mode")
-    )
 #+end_src
 
 * Save History
