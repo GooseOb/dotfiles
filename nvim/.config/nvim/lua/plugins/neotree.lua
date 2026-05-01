@@ -1,12 +1,6 @@
-local is_directory = function(path)
-	local stat = vim.uv.fs_stat(path)
-	return stat and stat.type == "directory"
-end
-
 return {
 	"nvim-neo-tree/neo-tree.nvim",
 	cmd = "Neotree",
-	lazy = #vim.v.argv < 3 or not is_directory(vim.v.argv[3]),
 	branch = "v3.x",
 	dependencies = {
 		"nvim-lua/plenary.nvim",
@@ -16,7 +10,6 @@ return {
 	},
 	keys = {
 		{ "<leader>e", ":Neotree float reveal<CR>" },
-		{ "<leader>E", ":Neotree left reveal<CR>" },
 		{ "<leader>o", ":Neotree float git_status<CR>" },
 	},
 	opts = {
@@ -29,8 +22,8 @@ return {
 				visible = true,
 				hide_dotfiles = false,
 				hide_gitignored = true,
-			}
-		}
+			},
+		},
 	},
 	init = function()
 		vim.fn.sign_define("DiagnosticSignError", { text = " ", texthl = "DiagnosticSignError" })

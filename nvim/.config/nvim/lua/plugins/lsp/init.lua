@@ -6,11 +6,8 @@ return {
 	lazy = false,
 	event = { "BufReadPre", "BufNewFile" },
 	cmd = { "LspInfo", "LspInstall", "LspUninstall" },
-	opts = {
-		servers = require("plugins.lsp.servers"),
-	},
-	config = function(_, opts)
-		for server, config in pairs(opts.servers) do
+	config = function()
+		for server, config in pairs(require("plugins.lsp.servers")) do
 			config.capabilities = require("blink.cmp").get_lsp_capabilities(config.capabilities)
 			if next(config) then
 				vim.lsp.config(server, config)
