@@ -1,11 +1,11 @@
 configuration {
-	modes: "window,drun,run,filebrowser,recursivebrowser,combi";
+	modes: "window,drun,run,filebrowser,recursivebrowser,combi,calc";
 /*	font: "mono 12";*/
 /*	location: 0;*/
 /*	yoffset: 0;*/
 /*	xoffset: 0;*/
 /*	fixed-num-lines: true;*/
-/*	show-icons: false;*/
+	show-icons: true;
 /*	preview-cmd: ;*/
 /*	on-selection-changed: ;*/
 /*	on-mode-changed: ;*/
@@ -166,4 +166,4 @@ configuration {
       sorting-method:    "name";
   }
 }
-@theme "Arc-Dark"
+@theme "gooseob.rasi"

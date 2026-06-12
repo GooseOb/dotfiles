@@ -1,0 +1,175 @@
+* {
+    font: "JetBrains Mono Nerd Font 14";
+
+    foreground:  #dcb;
+    dark: #111;
+	background-color: transparent;
+
+    pink:      #f49;
+    orange:    #f94;
+    blue:      #34a6db;
+    green:     #26a65b;
+    red:       #f53c3c;
+    teal:      #90b1b1;
+    gray:      #555;
+    lightgray: #999;
+    lightblue: #87ceeb;
+    lightred:  #c53;
+
+    transparent: #0000;
+}
+
+window {
+    location: center;
+    anchor:   center;
+    transparency: "real";
+    padding: 0;
+    border:  2px solid;
+	border-color:  #fff8;
+    border-radius: 16px;
+    color: @foreground;
+	background-color: #000b;
+    spacing: 0;
+    children:  [mainbox];
+    orientation: horizontal;
+}
+
+mainbox {
+    spacing: 0;
+    padding: 0;
+    children: [ inputbar, message, listview ];
+}
+
+inputbar {
+    color: @foreground;
+    padding: 14px 18px;
+    background-image: linear-gradient(45deg, rgba(35,40,120,0.85), rgba(60,10,80,0.85));
+    border: 0;
+    border-radius: 16px 16px 0 0;
+    spacing: 10px;
+    children: [ prompt, entry ];
+	border:  0 solid 0 1px;
+	border-color:  #fff8;
+}
+
+entry, prompt, case-indicator {
+    background-color: transparent;
+    text-font: inherit;
+    text-color: inherit;
+}
+
+prompt {
+    margin: 0;
+    text-color: @orange;
+}
+
+entry {
+    placeholder-color: @gray;
+}
+
+message {
+    border: 0;
+    padding: 8px 14px;
+    background-color: #fff;
+    // background-color: rgba(10,10,10,0.6);
+    font: "JetBrains Mono Nerd Font 12";
+    text-color: @lightgray;
+}
+
+listview {
+    padding: 8px;
+    border-radius: 0 0 16px 16px;
+    border: 0;
+    background-color: transparent;
+    dynamic: false;
+    lines: 10;
+    spacing: 2px;
+    scrollbar: true;
+    scrollbar-width: 6px;
+}
+
+element {
+    padding: 8px 14px;
+    vertical-align: 0.5;
+    border-radius: 8px;
+    background-color: transparent;
+    color: @foreground;
+    font: inherit;
+}
+
+element-text {
+    background-color: inherit;
+    text-color: inherit;
+	border-radius: 8px;
+	padding: 4px 12px;
+}
+
+element-icon {
+    size: 1em;
+	margin: 0 8px 0 0;
+}
+
+element selected.normal {
+    background-color: rgba(255,100,255,0.15);
+    text-color: @foreground;
+}
+
+element normal.active {
+    text-color: @lightblue;
+}
+
+element normal.urgent {
+    text-color: @lightred;
+}
+
+element alternate.normal {
+}
+
+element alternate.active {
+    text-color: @lightblue;
+}
+
+element alternate.urgent {
+    text-color: @lightred;
+}
+
+element selected.active {
+    background-color: rgba(52, 166, 219, 0.2);
+    text-color: @foreground;
+}
+
+element.selected.urgent {
+    background-color: rgba(245, 60, 60, 0.2);
+    text-color: @foreground;
+}
+
+element.selected.alternate {
+    background-color: rgba(255,100,255,0.15);
+}
+
+button {
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    background-color: rgba(20,20,20,0.8);
+    color: @lightgray;
+    horizontal-align: 0.5;
+}
+
+button.selected {
+    color: @foreground;
+    background-color: rgba(255,100,255,0.15);
+}
+
+scrollbar {
+    handle-color: rgba(255,255,255,0.1);
+    handle-width: 6px;
+}
+
+error-message {
+    expand: true;
+    background-color: @red;
+    border: 0;
+    padding: 1em;
+    color: #000;
+}
