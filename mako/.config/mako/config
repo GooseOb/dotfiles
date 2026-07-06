@@ -1,0 +1,9 @@
+# --mode: ini--
+border-radius=10
+background-color=#1e222bcc
+border-color=#ffffff77
+font=JetBrains Mono
+width=400
+
+[app-name="Telegram Desktop"]
+default-timeout=3000
