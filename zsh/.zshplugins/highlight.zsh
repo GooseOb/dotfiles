@@ -1,8 +1,8 @@
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-local COMMAND_COLOR='fg=#7E9CD8'
-local STRING_COLOR='fg=#98BB6C'
-local ESCAPE_COLOR='fg=#E46876'
+local COMMAND_COLOR='fg=#FFDD33'
+local STRING_COLOR='fg=#73C936'
+local ESCAPE_COLOR='fg=#FF4F58'
 
 ZSH_HIGHLIGHT_STYLES[suffix-alias]="$COMMAND_COLOR,underline"
 ZSH_HIGHLIGHT_STYLES[precommand]="$COMMAND_COLOR,underline"
@@ -22,4 +22,4 @@ ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]="$ESCAPE_COLOR"
 
 ZSH_HIGHLIGHT_STYLES[unknown-token]="$ESCAPE_COLOR"
 
-ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#957FB8'
+ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=#95A99F'

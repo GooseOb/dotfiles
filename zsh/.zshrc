@@ -1,5 +1,5 @@
 # Enable colors and change prompt:
-PS1="%K{#7E9CD8} %F{black}%~%k%F{#7E9CD8}%f%b "
+PS1="%K{#96a6c8} %F{black}%~%k%F{#96a6c8}%f%b "
 
 HISTSIZE=10000
 SAVEHIST=10000
@@ -57,7 +57,7 @@ setopt autocd
 setopt HIST_SAVE_NO_DUPS
 setopt HIST_IGNORE_ALL_DUPS
 
-export PATH="$PATH:/home/gooseob/.local/share/gem/ruby/3.3.0/bin:$HOME/.bun/bin:$HOME/.emacs.d/bin"
+export PATH="/home/gooseob/.local/share/gem/ruby/3.3.0/bin:$HOME/.bun/bin:$HOME/.emacs.d/bin:$HOME/.cargo/bin:$PATH"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
@@ -81,3 +81,10 @@ source ~/.zshplugins/highlight.zsh
 # # bun completions
 # [ -s "/home/gooseob/.bun/_bun" ] && source "/home/gooseob/.bun/_bun"
 export QT_QPA_PLATFORM=xcb
+
+# opencode
+export PATH=/home/gooseob/.opencode/bin:$PATH
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
