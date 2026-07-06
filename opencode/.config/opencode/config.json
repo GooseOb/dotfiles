@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest"]
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@playwright/mcp@latest"]
+    },
+    "pdf-reader": {
+      "type": "local",
+      "command": ["npx", "-y", "@sylphx/pdf-reader-mcp@latest"]
+    },
+    "figma": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://mcp.figma.com/mcp",
+      "oauth": {
+        "clientId": "VW9KSTibMAxbWfstxPArSA",
+        "clientSecret": "mJmGq59Yea1xJgmBaipV1GUOX5NUzLa4W4IWJ9fs"
+      }
+    }
+  }
+}
