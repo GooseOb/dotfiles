@@ -5,12 +5,9 @@
 # on Ghostty's website, at https://ghostty.org/docs/config.
 
 background = #000000
-background-opacity = 0.8
+background-opacity = 0.9
 font-size = 16
 font-family = "JetBrains Mono Nerd Font"
-font-style-bold = false
-font-style-italic = false
-font-style-bold-italic = false
 shell-integration = zsh
 theme = "Kanagawa Wave"
 window-theme = ghostty
