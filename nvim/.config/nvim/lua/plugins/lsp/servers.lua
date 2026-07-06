@@ -1,5 +1,7 @@
 local data_path = vim.fn.stdpath("data")
 local mason_packages_path = data_path .. "/mason/packages"
+local vue_typescript_plugin_path = mason_packages_path
+	.. "/vue-language-server/node_modules/@vue/typescript-plugin"
 
 return {
 	tinymist = {
@@ -30,6 +32,24 @@ return {
 			client.server_capabilities.documentFormattingProvider = false
 			client.server_capabilities.documentRangeFormattingProvider = false
 		end,
+		-- `vue_ls` forwards TS requests to a TS server attached to the same buffer.
+		-- Attach `ts_ls` to Vue SFCs and load Vue's TS plugin from Mason.
+		init_options = {
+			plugins = {
+				{
+					name = "@vue/typescript-plugin",
+					location = vue_typescript_plugin_path,
+					languages = { "javascript", "typescript", "vue" },
+				},
+			},
+		},
+		filetypes = {
+			"javascript",
+			"javascriptreact",
+			"typescript",
+			"typescriptreact",
+			"vue",
+		},
 	},
 	cssls = {},
 	clangd = {},
